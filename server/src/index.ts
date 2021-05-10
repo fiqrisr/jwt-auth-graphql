@@ -8,16 +8,15 @@ import { buildSchema } from 'type-graphql';
 import { UserResolver } from './UserResolver';
 import { verify } from 'jsonwebtoken';
 import { User } from './entity/User';
-import { createAccessToken } from './auth';
+import { createAccessToken, createRefreshToken } from './auth';
+import { sendRefreshToken } from './sendRefreshToken';
 
 (async () => {
 	const app = express();
 
-	app.use(cookieParser());
-
 	app.get('/', (_, res) => res.send('hello'));
 
-	app.post('/refresh_token', async (req, res) => {
+	app.post('/refresh_token', cookieParser(), async (req, res) => {
 		const token = req.cookies.jid;
 
 		if (!token) return res.send({ ok: false, accessToken: '' });
@@ -34,6 +33,11 @@ import { createAccessToken } from './auth';
 		const user = await User.findOne({ id: payload.userId });
 
 		if (!user) return res.send({ ok: false, accessToken: '' });
+
+		if (user.tokenVersion !== payload.tokenVersion)
+			return res.send({ ok: false, accessToken: '' });
+
+		sendRefreshToken(res, createRefreshToken(user));
 
 		return res.send({ ok: true, accessToken: createAccessToken(user) });
 	});

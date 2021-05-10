@@ -2,6 +2,7 @@ import {
 	Arg,
 	Ctx,
 	Field,
+	Int,
 	Mutation,
 	ObjectType,
 	Query,
@@ -13,6 +14,8 @@ import { User } from './entity/User';
 import { MyContext } from './MyContext';
 import { createAccessToken, createRefreshToken } from './auth';
 import { isAuth } from './isAuthMiddleware';
+import { sendRefreshToken } from './sendRefreshToken';
+import { getConnection } from 'typeorm';
 
 @ObjectType()
 class LoginResponse {
@@ -72,10 +75,19 @@ export class UserResolver {
 
 		if (!valid) throw new Error('Invalid credentials');
 
-		res.cookie('jid', createRefreshToken(user), { httpOnly: true });
+		sendRefreshToken(res, createRefreshToken(user));
 
 		return {
 			accessToken: createAccessToken(user)
 		};
+	}
+
+	@Mutation(() => Boolean)
+	async revokeRefreshTokenForUser(@Arg('userId', () => Int) userId: number) {
+		await getConnection()
+			.getRepository(User)
+			.increment({ id: userId }, 'tokenVersion', 1);
+
+		return true;
 	}
 }
