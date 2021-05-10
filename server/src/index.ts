@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import { createConnection } from 'typeorm';
 import { ApolloServer } from 'apollo-server-express';
 import cookieParser from 'cookie-parser';
@@ -13,6 +14,13 @@ import { sendRefreshToken } from './sendRefreshToken';
 
 (async () => {
 	const app = express();
+
+	app.use(
+		cors({
+			origin: 'http://localhost:3000',
+			credentials: true
+		})
+	);
 
 	app.get('/', (_, res) => res.send('hello'));
 
@@ -51,7 +59,7 @@ import { sendRefreshToken } from './sendRefreshToken';
 		context: ({ req, res }) => ({ req, res })
 	});
 
-	apolloServer.applyMiddleware({ app });
+	apolloServer.applyMiddleware({ app, cors: false });
 
 	app.listen(4000, () => console.log('App started on 4000'));
 })();
