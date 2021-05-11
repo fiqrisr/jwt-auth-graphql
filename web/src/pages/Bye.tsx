@@ -1,12 +1,13 @@
 import { useByeQuery } from 'src/generated/graphql';
 
 const Bye: React.FC = () => {
-	const { data, loading, error } = useByeQuery();
+	const { data, loading, error } = useByeQuery({
+		fetchPolicy: 'network-only'
+	});
 
 	if (loading) return <div>loading...</div>;
 
 	if (error) {
-		console.log(error);
 		return <div>error</div>;
 	}
 
